@@ -1,76 +1,101 @@
-# GeoJSON Plotter - Mapflow Building Analysis
+# GeoJSON Plotter
 
-A Python tool for extracting building footprints and heights from satellite imagery using the Mapflow API.
+A Python project for Mapflow building analysis with GeoJSON and KML output.
+
+## Overview
+
+This repository provides:
+- a script-based workflow for processing an Area of Interest (AOI) with Mapflow
+- utilities to convert Mapflow output into GeoJSON, JSON, and KML
+- a FastAPI server for integration and automation
 
 ## Features
 
-- Process Area of Interest (AOI) using Mapflow API
-- Extract building footprints and height data
-- Convert results to GeoJSON, JSON, and KML formats
-- Transform KML files to GeoJSON
+- request Mapflow account credit status
+- create Mapflow projects
+- estimate processing cost for an AOI
+- create Mapflow processing jobs
+- download and transform Mapflow building data
+- expose a REST API for external clients
 
-## Prerequisites
+## Requirements
 
-- Python 3.8 or higher
-- Mapflow API account and credentials
+- Python 3.8+
+- `pip`
+- Mapflow API credentials
 
-## Setup
+## Installation
 
-### 1. Clone or Download the Project
+1. Clone the repository:
 
 ```bash
 git clone <repository-url>
-cd geojson\ plotter
+cd geojson_plotter
 ```
 
-### 2. Create Virtual Environment
+2. Create and activate a virtual environment:
 
 ```bash
 python -m venv .venv
 ```
 
-Activate the virtual environment:
-- **Windows (PowerShell):**
-  ```powershell
-  .\.venv\Scripts\Activate.ps1
-  ```
-- **Windows (Command Prompt):**
-  ```cmd
-  .venv\Scripts\activate.bat
-  ```
-- **macOS/Linux:**
-  ```bash
-  source .venv/bin/activate
-  ```
+Windows PowerShell:
 
-### 3. Install Dependencies
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Windows Command Prompt:
+
+```cmd
+.venv\Scripts\activate.bat
+```
+
+macOS / Linux:
+
+```bash
+source .venv/bin/activate
+```
+
+3. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure API Key
+## Configuration
 
-1. Create a .env file in the project root
-2. Add your Mapflow API key (as base64 encoded credentials):
-   ```
-   Mapflow_API_Key=<your_base64_encoded_credentials>
-   ```
+Create a `.env` file in the project root and add your Mapflow credentials. Example:
 
-**To get your API key:**
-- Visit [Mapflow API](https://api.mapflow.ai/)
-- Sign up for an account
-- Generate API credentials
-- Encode them as base64: `base64(email:password)`
+```dotenv
+MAPFLOW_API_KEY=your_api_key_here
+```
 
-### 5. Prepare Input Data
+> If your code uses a different credential filename or variable name, adjust this accordingly.
 
-Create a GeoJSON file with your Area of Interest (AOI):
-- Place it in `aoi_input/` directory
-- Name it `input.geojson`
-- Must contain a single polygon feature representing your AOI
+## Script Usage
 
-Example `input.geojson`:
+Run the main script:
+
+```bash
+python main.py
+```
+
+The application will:
+- load an AOI GeoJSON file
+- check Mapflow account credits
+- estimate processing cost
+- create a processing job
+- wait for the result
+- download and convert Mapflow output
+
+## Input GeoJSON
+
+Provide a valid GeoJSON file containing a single polygon feature.
+You can place the file anywhere in the repository, then update the path in `main.py` or call `load_aoi_geojson()` with the correct path.
+
+Example GeoJSON:
+
 ```json
 {
   "type": "FeatureCollection",
@@ -79,46 +104,29 @@ Example `input.geojson`:
       "type": "Feature",
       "geometry": {
         "type": "Polygon",
-        "coordinates": [[
-          [lon1, lat1],
-          [lon2, lat2],
-          [lon3, lat3],
-          [lon1, lat1]
-        ]]
+        "coordinates": [
+          [
+            [lon1, lat1],
+            [lon2, lat2],
+            [lon3, lat3],
+            [lon1, lat1]
+          ]
+        ]
       }
     }
   ]
 }
 ```
 
-## Usage
-
-Run the main script:
-
-```bash
-python main.py
-```
-
-The script will:
-1. Check your remaining Mapflow credits
-2. Calculate processing cost for your AOI
-3. Prompt you for a project name
-4. Process the building data
-5. Save results to:
-   - `geojson_output/` - Raw Mapflow results (GeoJSON)
-   - `finaljson_output/` - Processed results (JSON and KML)
-
 ## API Server
 
-The repository now includes a FastAPI service in `routes.py` and a runnable entrypoint in `app.py`.
-
-Start the API server with:
+Start the FastAPI server with:
 
 ```bash
 python app.py
 ```
 
-or with Uvicorn directly:
+Or use Uvicorn directly:
 
 ```bash
 uvicorn routes:app --reload
@@ -129,17 +137,16 @@ Open the docs at:
 - `http://127.0.0.1:8000/docs`
 - `http://127.0.0.1:8000/redoc`
 
-### API Endpoints
+## API Endpoints
 
 - `GET /credits`
 - `POST /projects`
 - `POST /processing/cost`
 - `POST /processing`
-- `GET /processing/{processing_id}/status`
 - `GET /processing/{processing_id}/download`
 - `GET /processing/history`
 
-### Example JSON Requests
+## Example Requests
 
 Create a project:
 
@@ -150,7 +157,7 @@ Create a project:
 }
 ```
 
-Estimate processing cost:
+Estimate cost:
 
 ```json
 {
@@ -171,7 +178,7 @@ Estimate processing cost:
 }
 ```
 
-Create a processing request:
+Create a processing job:
 
 ```json
 {
@@ -194,86 +201,62 @@ Create a processing request:
 }
 ```
 
-## Library Usage
+## Output
 
-If you want to reuse this project as a library from another Python project, import the package instead of using the script.
+- `geojson_output/`: raw GeoJSON output from Mapflow
+- `finaljson_output/`: processed JSON and KML output
 
-Example:
+## Example Usage
 
 ```python
-from geojson_plotter import MapflowClient, mapflow_geojson_to_properties, json_to_kml
+from services.mapflow import MapflowClient
+from services.geojson_modifier import mapflow_geojson_to_properties
+from services.kml_export import json_to_kml
 
-client = MapflowClient(key_file="Mapflow_API_key.txt")
-geometry = client.load_aoi_geojson("aoi_input/input.geojson")
+client = MapflowClient()
+aoi_geometry = client.load_aoi_geojson("input.geojson")
 project_id = "8ebb9d48-299c-47cb-afa9-e61dc1729f71"
-response = client.create_processing(project_id=project_id, name="My Project", aoi_polygon=geometry)
-client.download_results(response["id"])
-mapflow_geojson_to_properties("geojson_output/{response['id']}_results.geojson")
+response = client.create_processing(project_id=project_id, name="My Project", aoi_polygon=aoi_geometry)
+client.download_results(response.id)
+mapflow_geojson_to_properties("geojson_output/all_buildings.geojson")
 json_to_kml("finaljson_output/all_buildings.json")
 ```
-
-You can also call the package functions directly without using the command-line script.
 
 ## Project Structure
 
 ```
 .
-├── main.py                    # Main entry point
-├── mapflow.py                 # Mapflow API client
-├── geojson_modifier.py        # GeoJSON processing and property mapping
-├── KML_Export.py              # JSON to KML converter
-├── kml_to_geojson.py          # KML to GeoJSON converter
-├── Mapflow_API_key.txt        # API credentials (keep secret!)
-├── aoi_input/                 # Input directory for AOI GeoJSON
-├── geojson_output/            # Raw API results
-├── finaljson_output/          # Processed output (JSON/KML)
-├── KML_Input/                 # KML input files
-└── requirements.txt           # Python dependencies
+├── app.py
+├── main.py
+├── routes.py
+├── schema.py
+├── requirements.txt
+├── services/
+│   ├── geojson_modifier.py
+│   ├── kml_export.py
+│   ├── kml_to_geojson.py
+│   └── mapflow.py
+├── geojson_output/
+├── finaljson_output/
+└── README.md
 ```
-
-## Available Scripts
-
-### `main.py`
-Main building analysis workflow using Mapflow API.
-
-### `kml_to_geojson.py`
-Convert KML files to GeoJSON format.
-
-Usage:
-```bash
-python kml_to_geojson.py input.kml [output.geojson]
-```
-
-## Output Fields
-
-The processed JSON/KML includes:
-- Building properties (type, class, height, area)
-- GPS coordinates (latitude, longitude)
-- Calculated values (number of storeys, estimated occupancy)
-- Shape information
 
 ## Troubleshooting
 
-**"API key file not found"**
-- Ensure `Mapflow_API_key.txt` exists in the project root
-- Check file permissions
+"Error loading AOI GeoJSON"
+- ensure the input file path is correct
+- verify the file contains valid GeoJSON with a single polygon feature
 
-**"Insufficient credits"**
-- Purchase additional credits on your Mapflow account
-- Re-run the script with more credits available
+"API key file not found"
+- verify your `.env` contains the right variable or credentials file
 
-**"Error loading AOI GeoJSON"**
-- Verify `aoi_input/input.geojson` exists
-- Ensure it contains valid GeoJSON with a single polygon feature
-
-## Requirements
-
-See [requirements.txt](requirements.txt) for full dependency list.
+"Insufficient credits"
+- add credits to your Mapflow account before retrying
 
 ## License
 
-[Add your license here]
+Add your license information here.
 
 ## Support
 
-For issues with the Mapflow API, visit: https://mapflow.ai/docs
+For Mapflow API issues, visit: https://mapflow.ai/docs
