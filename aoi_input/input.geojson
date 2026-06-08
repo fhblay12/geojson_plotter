@@ -1,0 +1,23 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "GA Square"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [-0.263903, 5.669503],
+                        [-0.254897, 5.669503],
+                        [-0.254897, 5.678503],
+                        [-0.263903, 5.678503],
+                        [-0.263903, 5.669503]
+                    ]
+                ]
+            }
+        }
+    ]
+}
