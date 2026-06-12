@@ -62,7 +62,16 @@ def mapflow_geojson_to_propertiesjson(geojson: dict) -> List[Dict[str, Any]]:
             "rateable_value": None,
             "lvd_val_no": None,
         }
+        if int(props.get("area")) > 1000:
+            property_dict["no_of_washrooms"] = "4"
+        elif int(props.get("area")) > 700 and int(props.get("area")) < 1000:
+            property_dict["no_of_washrooms"] = "3"
+        elif int(props.get("area", 0)) > 500:
+            property_dict["no_of_washrooms"] = "2"
+        else:
+            property_dict["no_of_washrooms"] = "1"
 
+        property_dict["no_of_otherrooms"] = str(int(props.get("area")) // 100)
         results.append(property_dict)
 
     return results
