@@ -78,9 +78,9 @@ class MapflowClient:
     def wait_for_processing(self, processing_id: str, poll_interval: int = 10, timeout: int = 600) -> str:
         elapsed = 0
         while elapsed < timeout:
-            status_obj = self.get_processing_status(processing_id)
-            status = status_obj.status  # or however you access it
-            print(f"Processing status: {status_obj} ({elapsed}s elapsed)")
+            status = self.get_processing_status(processing_id)
+             # or however you access it
+            print(f"Processing status: {status} ({elapsed}s elapsed)")
             
             if status == "OK":                          # ← was "FINISHED"
                 return status
@@ -129,7 +129,7 @@ class MapflowClient:
     def get_processing_status(self, processing_id: str) -> MapflowProcessingStatusResponse:
         """Get processing status and details."""
         resp = self._get(f"/processings/{processing_id}/v2")
-        return MapflowProcessingStatusResponse.model_validate(resp)
+        return resp["status"]
 
     def calculate_total_cost(self, provider_name: str = "Mapbox", wd_id: str = "8cb13006-a299-4df6-b47d-91bd63de947f", area_sq_km: float = 1.5, aoi_polygon: Optional[Geometry] = None) -> int: 
         """Estimate processing cost in credits.
